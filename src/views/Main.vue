@@ -1,8 +1,8 @@
 <template>
+  <div class="maintab" style="z-index: 1000">
+    <maintab />
+  </div>
   <div class="main-container">
-    <div class="maintab" style="z-index: 1000">
-      <maintab />
-    </div>
     <div class="Welcome">
       <img alt="LOGO_black" src="../assets/img/afbalbatross_black.svg" />
       <h1>{{ $t("messages.main_welcome") }}</h1>
@@ -173,13 +173,10 @@ export default {
 .main-container {
   min-height: 100vh;
   width: 100%;
-  background-color: 
-    #ffffff;
-
+  background-color: #ffffff;
   background-size: 20px 20px;
   background-position: center center;
-  background-image: 
-    linear-gradient(to right, #cbd5e1 1px, transparent 1px),
+  background-image: linear-gradient(to right, #cbd5e1 1px, transparent 1px),
     linear-gradient(to bottom, #cbd5e1 1px, transparent 1px);
 }
 
@@ -284,7 +281,7 @@ export default {
 }
 .teamsinformation {
   position: relative;
-  z-index: 600;
+  z-index: 6;
 }
 .inviteteam {
   display: flex;
@@ -458,8 +455,5 @@ export default {
   color: white;
   cursor: pointer;
   font-size: 16px;
-}
-.maintab{
-  z-index: 10000;
 }
 </style>

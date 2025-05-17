@@ -24,7 +24,6 @@
   width: auto;
   margin: 0 auto;
   position: relative;
-  z-index: 600;
 }
 .item {
   text-align: center;

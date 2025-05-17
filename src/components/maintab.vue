@@ -254,6 +254,7 @@ export default {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   cursor: move; /* 添加移动光标 */
   user-select: none; /* 防止文字被选中 */
+  z-index: 10000;
 }
 
 .sidebar:hover {
