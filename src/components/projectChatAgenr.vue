@@ -10,7 +10,14 @@
     @mousedown="startDrag"
   >
     <div class="nav-bar">
-      <a>MultiAgent</a>
+      <div class="nav-head">
+        <img
+          alt="LOGO"
+          src="../assets/img/icon/afbalbatross.svg"
+          style="transform: scale(0.7)"
+        />
+        <a>MultiAgent</a>
+      </div>
       <div class="close" @click="handleClose">
         <div class="line one"></div>
         <div class="line two"></div>
@@ -23,10 +30,10 @@
         class="message"
         :class="{ 'user-message': message.isUser }"
       >
+        <div class="message-sender">
+          {{ message.isUser ? "User" : "Agent" }}
+        </div>
         <div class="message-content">
-          <div class="message-avatar">
-            {{ message.isUser ? "👤" : "🤖" }}
-          </div>
           <div class="message-text">{{ message.content }}</div>
         </div>
       </div>
@@ -70,6 +77,7 @@
 </template>
 <script setup>
 import { ref, defineProps, defineEmits, nextTick } from "vue";
+import axios from "axios";
 
 const props = defineProps({
   isshow: Boolean,
@@ -155,6 +163,7 @@ const sendMessage = async () => {
 
   // 清空输入框
   const userMessage = inputMessage.value;
+  console.log(userMessage);
   inputMessage.value = "";
 
   // 滚动到底部
@@ -162,20 +171,18 @@ const sendMessage = async () => {
   scrollToBottom();
 
   try {
-    // TODO: 调用后端API获取回复
-    // const response = await fetch('/api/chat', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({ message: userMessage }),
-    // });
-    // const data = await response.json();
-
-    // 模拟API响应
+    const response = await axios.post("http://localhost:3000/", userMessage);
     setTimeout(() => {
       messages.value.push({
-        content: `这是测试的回复`,
+        content: response.data.round0.assistant.value,
+        isUser: false,
+        timestamp: new Date(),
+      });
+      scrollToBottom();
+    }, 1000);
+    setTimeout(() => {
+      messages.value.push({
+        content: response.data.round1.assistant.value,
         isUser: false,
         timestamp: new Date(),
       });
@@ -204,13 +211,13 @@ const scrollToBottom = () => {
   position: fixed;
   top: 0;
   left: 0;
-  background-color: #343541;
+  background-color: #1a1a1a;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   cursor: move;
   user-select: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .nav-bar {
@@ -257,7 +264,7 @@ const scrollToBottom = () => {
 }
 
 .messages-area {
-  width: 100%;
+  width: 95%;
   flex: 1;
   overflow-y: auto;
   display: flex;
@@ -271,11 +278,18 @@ const scrollToBottom = () => {
   display: flex;
   flex-direction: column;
   max-width: 80%;
-  margin: 5px;
+  margin: 2px;
 }
 
 .message.user-message {
   align-self: flex-end;
+}
+
+.message-sender {
+  color: #888;
+  font-size: 12px;
+  margin-bottom: 4px;
+  padding-left: 12px;
 }
 
 .message-content {
@@ -284,11 +298,11 @@ const scrollToBottom = () => {
   gap: 8px;
   padding: 8px 12px;
   border-radius: 8px;
-  background-color: #2e2f3a;
+  background-color: #2a2a2a;
 }
 
 .user-message .message-content {
-  background-color: #40414f;
+  background-color: #333333;
 }
 
 .message-avatar {
@@ -297,14 +311,14 @@ const scrollToBottom = () => {
 }
 
 .message-text {
-  color: #fff;
+  color: #e0e0e0;
   font-size: 14px;
   line-height: 1.4;
   word-break: break-word;
 }
 
 .sender-area {
-  background-color: #343541;
+  background-color: #1a1a1a;
   width: 70%;
   padding: 10px;
   display: flex;
@@ -325,7 +339,7 @@ const scrollToBottom = () => {
   flex: 1;
   border-radius: 7px;
   background: none;
-  color: white;
+  color: #e0e0e0;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
@@ -333,19 +347,19 @@ const scrollToBottom = () => {
 }
 
 .send-input::placeholder {
-  color: #828e9e;
+  color: #666;
 }
 
 .input-place {
   display: flex;
   flex-direction: row;
   align-items: center;
-  background-color: #40414f;
+  background-color: #2a2a2a;
   border-radius: 7px;
   height: 40px;
   width: 100%;
   gap: 5px;
-  border: 1px solid #2e2f3a;
+  border: 1px solid #333333;
 }
 
 .send {
