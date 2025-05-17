@@ -169,12 +169,21 @@ const sendMessage = async () => {
   // 滚动到底部
   await nextTick();
   scrollToBottom();
-
+  const text = userMessage;
   try {
-    const response = await axios.post("http://localhost:3000/", userMessage);
+    const response = await axios.post(
+      "http://127.0.0.1:5000/api/process",
+      { text: text },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log(response);
     setTimeout(() => {
       messages.value.push({
-        content: response.data.round0.assistant.value,
+        content: response.data.round0.assistant,
         isUser: false,
         timestamp: new Date(),
       });
@@ -182,7 +191,7 @@ const sendMessage = async () => {
     }, 1000);
     setTimeout(() => {
       messages.value.push({
-        content: response.data.round1.assistant.value,
+        content: response.data.round1.assistant,
         isUser: false,
         timestamp: new Date(),
       });

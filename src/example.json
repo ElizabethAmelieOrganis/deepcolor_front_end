@@ -1,6 +1,10 @@
 {
-  "data": {
-    "sender": "Agent1",
-    "message": "Hello, how are you?"
+  "round0": {
+    "role": "",
+    "assistant": ""
+  },
+  "round1": {
+    "role": "",
+    "assistant": ""
   }
 }

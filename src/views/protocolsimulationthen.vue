@@ -12,28 +12,14 @@
       </div>
       <div class="ide-container">
         <div class="agent-panel">
-          <div class="chat-history" ref="chatContainer">
+          <div class="chat-history">
             <div
               v-for="(message, index) in messages"
               :key="index"
               class="message"
-              :class="{
-                'message-right': message.isUser,
-                'message-processing': message.isProcessing,
-                'message-system': message.isSystem,
-              }"
+              :class="{ 'message-right': message.isUser }"
             >
-              <div class="message-content">
-                <div
-                  class="message-text"
-                  v-html="formatMessage(message.text)"
-                ></div>
-                <div v-if="message.isProcessing" class="processing-indicator">
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                </div>
-              </div>
+              {{ message.text }}
             </div>
           </div>
           <div class="input-box">
@@ -42,29 +28,17 @@
               v-model="newMessage"
               placeholder="输入消息..."
               @keyup.enter="sendMessage"
-              :disabled="isProcessing"
             />
             <img
               class="send-button"
               alt="send"
               src="../assets/img/icon/send.svg"
               @click="sendMessage"
-              :class="{ disabled: isProcessing }"
             />
-            <button
-              class="control-button"
-              @click="togglePause"
-              :disabled="isProcessing"
-            >
+            <button class="control-button" @click="togglePause">
               {{ isPaused ? "继续" : "暂停" }}
             </button>
-            <button
-              class="control-button"
-              @click="saveProtocol"
-              :disabled="isProcessing"
-            >
-              保存
-            </button>
+            <button class="control-button" @click="saveProtocol">保存</button>
           </div>
         </div>
         <div class="protocol-panel">
@@ -144,20 +118,9 @@
 <script setup>
 import maintab from "../components/maintab.vue";
 import loadingMAS from "../components/loadingMAS.vue";
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
+import { ref } from "vue";
+import { onMounted } from "vue";
 import axios from "axios";
-import { io } from "socket.io-client";
-import { config } from "../config";
-// 配置axios实例
-const axiosInstance = axios.create({
-  baseURL: config.apiBaseUrl,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// WebSocket连接配置
-const socket = io(config.socketUrl, config.socketOptions);
 
 const showLoading = ref(true);
 const newMessage = ref("");
@@ -165,121 +128,7 @@ const messages = ref([]);
 const isPaused = ref(false);
 const isEditing = ref(false);
 const savedProtocols = ref([]);
-const isConnected = ref(false);
-const isProcessing = ref(false);
-const chatContainer = ref(null);
 let timeoutIds = [];
-
-// 格式化消息文本，将Markdown转换为HTML
-const formatMessage = (text) => {
-  if (!text) return "";
-  // 简单的Markdown转换
-  return text
-    .replace(/\n/g, "<br>")
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.*?)\*/g, "<em>$1</em>")
-    .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
-    .replace(/`(.*?)`/g, "<code>$1</code>")
-    .replace(/^# (.*$)/gm, "<h1>$1</h1>")
-    .replace(/^## (.*$)/gm, "<h2>$1</h2>")
-    .replace(/^### (.*$)/gm, "<h3>$1</h3>");
-};
-
-// 滚动到最新消息
-const scrollToBottom = async () => {
-  await nextTick();
-  if (chatContainer.value) {
-    chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-  }
-};
-
-// WebSocket事件处理
-onMounted(() => {
-  setupWebSocketListeners();
-  connectWebSocket();
-  // 添加欢迎消息和使用提示
-  messages.value.push({
-    text: "👋 欢迎使用实验方案助手！\n\n请在下方输入框描述您想要查询的实验，我们将为您生成对应的protocol\n请注意直接输入实验对应的英文关键词，不要有过多其他内容，使用中文会无法查询，例如：\n- 'PCR'\n- 'Western Blot'\n- 'RNA extraction'\n\n我会为您提供详细的实验方案和操作步骤。",
-    isUser: false,
-    isSystem: true,
-  });
-  scrollToBottom();
-  showLoading.value = false;
-});
-
-onUnmounted(() => {
-  disconnectWebSocket();
-});
-
-const setupWebSocketListeners = () => {
-  socket.on("connect", () => {
-    console.log("WebSocket连接成功");
-    isConnected.value = true;
-    showLoading.value = false;
-  });
-
-  socket.on("disconnect", () => {
-    console.log("WebSocket断开连接");
-    isConnected.value = false;
-  });
-
-  socket.on("connect_error", (error) => {
-    console.error("WebSocket连接错误:", error);
-    isConnected.value = false;
-    showLoading.value = false;
-  });
-
-  socket.on("protocol_progress", (data) => {
-    console.log("收到进度消息:", data);
-    handleProgressMessage(data);
-  });
-
-  socket.on("connection_response", (data) => {
-    console.log("连接响应:", data);
-  });
-};
-
-const connectWebSocket = () => {
-  if (!socket.connected) {
-    socket.connect();
-  }
-};
-
-const disconnectWebSocket = () => {
-  if (socket.connected) {
-    socket.disconnect();
-  }
-};
-
-const handleProgressMessage = (data) => {
-  if (!data) return;
-
-  if (data.isProcessing) {
-    // 处理中的消息
-    const processingMessage = {
-      text: data.message,
-      isProcessing: true,
-      isUser: false,
-    };
-    messages.value.push(processingMessage);
-  } else {
-    // 完成的消息
-    const lastMessage = messages.value[messages.value.length - 1];
-    if (lastMessage && lastMessage.isProcessing) {
-      // 更新最后一条处理中的消息
-      lastMessage.isProcessing = false;
-      lastMessage.text = data.message;
-    } else {
-      // 添加新消息
-      messages.value.push({
-        text: data.message,
-        isProcessing: false,
-        isUser: false,
-      });
-    }
-  }
-  scrollToBottom();
-};
 
 const togglePause = () => {
   isPaused.value = !isPaused.value;
@@ -324,46 +173,45 @@ const saveToFile = () => {
   // 这里可以添加保存到文件的功能
   console.log("保存到文件");
 };
-
-// 发送消息
+//提交问题逻辑
 const sendMessage = async () => {
-  if (!newMessage.value.trim() || isProcessing.value) return;
-
-  const userMessage = {
-    text: newMessage.value,
-    isUser: true,
-  };
-  messages.value.push(userMessage);
-
-  const messageText = newMessage.value;
-  newMessage.value = "";
-  isProcessing.value = true;
-
-  try {
-    const response = await axiosInstance.post("/api/protocol", {
-      text: messageText,
-    });
-
-    if (response.data.success) {
-      isProcessing.value = false;
-    } else {
-      messages.value.push({
-        text: "处理请求失败: " + (response.data.error || "未知错误"),
-        isUser: false,
-      });
-      isProcessing.value = false;
-    }
-  } catch (error) {
-    console.error("发送消息错误:", error);
+  if (newMessage.value.trim()) {
+    // 添加用户消息
     messages.value.push({
-      text: "发送消息失败: " + (error.message || "未知错误"),
+      text: newMessage.value,
+      isUser: true,
+    });
+  }
+  try {
+    const inputElement = document.querySelector("input");
+    inputElement.disabled = true;
+    const response = await axios.post("http://127.0.0.1:5000/api/process", {
+      text: newMessage.value,
+    });
+    console.log("sendSuccessfully:", response.data);
+    const messsaged = response.data.message;
+    messages.value.push({
+      text: messsaged,
       isUser: false,
     });
-    isProcessing.value = false;
+    newMessage.value = "";
+  } catch (error) {
+    console.error("failToSend", error);
+    messages.value.push({
+      text: "发送失败，请稍后再试试吧。",
+      isUser: false,
+    });
+  } finally {
+    const inputElement = document.querySelector("input");
+    inputElement.disabled = false;
   }
-
-  scrollToBottom();
 };
+
+onMounted(() => {
+  setTimeout(() => {
+    showLoading.value = false;
+  }, 1000);
+});
 </script>
 <style scoped>
 .protocol_IDE {
@@ -513,15 +361,13 @@ const sendMessage = async () => {
 .message {
   background-color: #4a4a4a;
   color: white;
-  padding: 12px 16px;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  max-width: 80%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  max-width: 70%;
   word-wrap: break-word;
   white-space: pre-wrap;
   line-height: 1.4;
-  animation: fadeIn 0.3s ease-in-out;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .message-right {
@@ -529,136 +375,41 @@ const sendMessage = async () => {
   background-color: #f48231;
 }
 
-.message-processing {
-  background-color: #666;
-  border-left: 4px solid #f48231;
-}
-
-.message.message-system {
-  background-color: #2c3e50;
-  border-left: 4px solid #3498db;
-  font-size: 14px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  margin-bottom: 20px;
-  padding: 16px 20px;
-  border-radius: 8px;
-  position: relative;
-}
-
-.message.message-system::before {
-  content: "💡";
-  position: absolute;
-  left: -25px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 20px;
-}
-
-.message-system ul {
-  margin: 8px 0;
-  padding-left: 20px;
-}
-
-.message-system li {
-  margin: 4px 0;
+.chat-history {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .message-content {
   position: relative;
 }
 
-.message-text {
-  margin-bottom: 4px;
+.message-preview {
+  margin-bottom: 5px;
 }
 
-.processing-indicator {
-  display: flex;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  background-color: #fff;
-  border-radius: 50%;
-  animation: bounce 1s infinite;
-}
-
-.dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.dot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.chat-history {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-  overflow-y: auto;
-  scroll-behavior: smooth;
-}
-
-.input-box input:disabled,
-.send-button.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Markdown样式 */
-.message-text :deep(pre) {
-  background-color: #2d2d2d;
-  padding: 12px;
-  border-radius: 6px;
-  overflow-x: auto;
-}
-
-.message-text :deep(code) {
-  background-color: #2d2d2d;
-  padding: 2px 6px;
+.message-full {
+  margin-top: 5px;
+  padding: 5px;
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
-  font-family: monospace;
 }
 
-.message-text :deep(h1),
-.message-text :deep(h2),
-.message-text :deep(h3) {
-  margin: 8px 0;
-  color: #fff;
+.expand-button {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-top: 5px;
+  transition: all 0.3s ease;
 }
 
-.message-text :deep(strong) {
-  color: #f48231;
-}
-
-.message-text :deep(em) {
-  font-style: italic;
-  color: #ddd;
+.expand-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .control-button {
