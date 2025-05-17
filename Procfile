@@ -1,0 +1,1 @@
+web: gunicorn cl_mas_backend.wsgi:application 
