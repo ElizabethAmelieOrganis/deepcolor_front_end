@@ -53,7 +53,6 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 //引入pinia
 import { useAuthStore } from "@/stores/auth";
-import { ElMessage } from "element-plus";
 //引入拦截器
 import axiosInstance from "@/utils/axios";
 const authStore = useAuthStore();
@@ -85,11 +84,11 @@ const handleLogin = async () => {
     if (valid) {
       try {
         // 使用正确的API路径
-        const response = await axiosInstance.post(
-          "/api/auth/token/",
-          loginForm.value
-        );
-        ElMessage.success("登录成功");
+        const response = await axiosInstance.post("/api/auth/token/", {
+          email: loginForm.email,
+          password: loginForm.password,
+        });
+        console.log("登陆成功", response.data);
         // 保存token
         const { access, refresh } = response.data;
         // 存储token
@@ -101,9 +100,7 @@ const handleLogin = async () => {
         router.push("/main");
       } catch (error) {
         console.error("登录错误:", error);
-        ElMessage.error(
-          "登录失败：" + (error.response?.data?.detail || "请检查邮箱和密码")
-        );
+        alert("登陆失败,请检查邮箱或者密码是否正确");
       }
     }
   });
