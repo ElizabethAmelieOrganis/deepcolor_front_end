@@ -43,7 +43,8 @@ export default {
     maintab_greeting: "Hello",
     maintab_logout: "Logout",
     maintab_protocol: "Protocol",
-    maintab_knowledgeGraphTool: "knowledgeGraphTool",
+    maintab_knowledgeGraphTool: "GraphTool",
     main_progress: "Task Progress",
+    maintab_team: "Team",
   },
 };

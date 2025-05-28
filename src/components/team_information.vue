@@ -5,7 +5,7 @@
       <div class="text">成员</div>
     </div>
     <div class="item">
-      <div class="number">0</div>
+      <div class="number">2</div>
       <div class="text">项目</div>
     </div>
     <div class="item">
@@ -18,7 +18,7 @@
 .container {
   display: flex;
   justify-content: space-around;
-  background-color: #606060;
+  background-color: #242424;
   padding: 10px;
   border-radius: 10px;
   width: auto;

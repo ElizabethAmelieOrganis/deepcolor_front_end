@@ -43,5 +43,6 @@ export default {
     maintab_protocol: "实验设计",
     maintab_knowledgeGraphTool: "知识图谱工具",
     maintab_logout: "退出登录",
+    maintab_team: "团队",
   },
 };

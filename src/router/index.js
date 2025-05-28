@@ -10,7 +10,7 @@ import protocolsimulation from "../views/protocolsimulation.vue";
 import ProjectWorkbench from "../components/project_workbenches.vue";
 import Register from "../components/Register.vue";
 import KnowledgeGraphTool from "../views/KnowledgeGraphTool.vue";
-import component from "element-plus/es/components/tree-select/src/tree-select-option.mjs";
+import Team from "../views/Team.vue";
 
 const routes = [
   {
@@ -42,6 +42,11 @@ const routes = [
     path: "/main/project",
     name: "project_list",
     component: project_list,
+  },
+  {
+    path: "/main/team",
+    name: "team",
+    component: Team,
   },
   {
     path: "/project-workbench/:id",
