@@ -18,6 +18,7 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     allowedHosts: [
+      "canglan.xyz",
       "zweshafupokm.sealoshzh.site",
       "owvkcxwzwwkd.sealoshzh.site",
       "localhost",
