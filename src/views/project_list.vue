@@ -1,162 +1,178 @@
 <template>
-  <div class="project-container">
-    <div class="maintab">
-      <maintab />
-    </div>
-    <div class="project-header">
-      <div class="header-left">
-        <div class="tab-group">
-          <button class="tab active">全部项目</button>
-          <button class="tab">进入我的个人项目 ></button>
-        </div>
-      </div>
-      <div class="header-right">
-        <input type="text" class="search-input" placeholder="搜索项目名称" />
-        <button class="new-project-btn" @click="showNewProjectDialog = true">
-          + 新建
-        </button>
-        <button class="icon-btn refresh">
-          <span>⟳</span>
-        </button>
-        <button class="icon-btn settings">
-          <span>⚙</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- 项目弹窗 -->
-    <div
-      class="dialog-overlay"
-      v-if="showNewProjectDialog"
-      @click.self="closeDialog"
-    >
-      <div class="dialog">
-        <div class="dialog-header">
-          <h2>新增项目</h2>
-          <button class="close-btn" @click="closeDialog">×</button>
-        </div>
-        <div class="dialog-content">
-          <div class="form-group">
-            <label>
-              项目名称
-              <span class="required">*</span>
-            </label>
-            <div class="input-wrapper">
-              <input
-                v-model="newProject.name"
-                type="text"
-                placeholder="请输入项目名称"
-                maxlength="255"
-              />
-              <span class="char-count">{{ newProject.name.length }} / 255</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>
-              项目负责人
-              <span class="required">*</span>
-              <span class="info-icon" title="项目的主要负责人">?</span>
-            </label>
-            <select v-model="newProject.owner">
-              <option value="user@example.com">user@example.com</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>项目描述</label>
-            <div class="input-wrapper">
-              <textarea
-                v-model="newProject.description"
-                placeholder="请输入项目描述"
-                maxlength="255"
-              ></textarea>
-              <span class="char-count"
-                >{{ newProject.description.length }} / 255</span
-              >
-            </div>
+  <div class="maintab">
+    <maintab />
+  </div>
+  <div class="project-container-wrapper">
+    <div class="project-container">
+      <div class="project-header">
+        <div class="header-left">
+          <div class="tab-group">
+            <button class="tab active">全部项目</button>
           </div>
         </div>
-        <div class="dialog-footer">
-          <button class="cancel-btn" @click="closeDialog">取消</button>
-          <button
-            class="confirm-btn"
-            @click="createProject"
-            :disabled="!isFormValid"
-          >
-            确定
+        <div class="header-right">
+          <input type="text" class="search-input" placeholder="搜索项目名称" />
+          <button class="new-project-btn" @click="showNewProjectDialog = true">
+            + 新建
+          </button>
+          <button class="icon-btn refresh">
+            <span>⟳</span>
+          </button>
+          <button class="icon-btn settings">
+            <span>⚙</span>
           </button>
         </div>
       </div>
-    </div>
 
-    <div class="project-table">
-      <div class="table-header">
-        <div class="th project-name">项目名称</div>
-        <div class="th project-desc">项目描述</div>
-        <div class="th owner">负责人</div>
-        <div class="th create-time">创建时间</div>
-        <div class="th actions">操作</div>
-      </div>
+      <!-- 项目弹窗 -->
+      <div
+        class="dialog-overlay"
+        v-if="showNewProjectDialog"
+        @click.self="closeDialog"
+      >
+        <div class="dialog">
+          <div class="dialog-header">
+            <h2>新增项目</h2>
+            <button class="close-btn" @click="closeDialog">×</button>
+          </div>
+          <div class="dialog-content">
+            <div class="form-group">
+              <label>
+                项目名称
+                <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <input
+                  v-model="newProject.name"
+                  type="text"
+                  placeholder="请输入项目名称"
+                  maxlength="255"
+                />
+                <span class="char-count"
+                  >{{ newProject.name.length }} / 255</span
+                >
+              </div>
+            </div>
 
-      <div class="empty-state" v-if="projects.length === 0">
-        <div class="empty-icon">
-          <svg
-            t="1739721104977"
-            class="icon"
-            viewBox="0 0 1024 1024"
-            version="1.1"
-            xmlns="http://www.w3.org/2000/svg"
-            p-id="2460"
-            width="100"
-            height="100"
-          >
-            <path
-              d="M512 85.333333c235.637333 0 426.666667 191.029333 426.666667 426.666667S747.637333 938.666667 512 938.666667 85.333333 747.637333 85.333333 512 276.362667 85.333333 512 85.333333z m214.592 318.677334a32 32 0 0 0-45.248 0.064L544.736 541.066667l-81.792-89.109334a32 32 0 0 0-46.613333-0.576l-119.36 123.733334a32 32 0 1 0 46.058666 44.437333l95.754667-99.264 81.418667 88.704a32 32 0 0 0 46.24 0.96l160.213333-160.693333a32 32 0 0 0-0.064-45.248z"
-              fill="#2c2c2c"
-              p-id="2461"
-            ></path>
-          </svg>
-        </div>
-        <div class="empty-text">暂无数据</div>
-      </div>
+            <div class="form-group">
+              <label>
+                项目负责人
+                <span class="required">*</span>
+                <span class="info-icon" title="项目的主要负责人">?</span>
+              </label>
+              <select v-model="newProject.owner">
+                <option value="user@example.com">user@example.com</option>
+              </select>
+            </div>
 
-      <div class="table-body" v-else>
-        <div class="table-row" v-for="project in projects" :key="project.id">
-          <div class="td project-name">{{ project.name }}</div>
-          <div class="td project-desc">{{ project.description }}</div>
-          <div class="td owner">{{ project.owner }}</div>
-          <div class="td create-time">{{ project.createTime }}</div>
-          <div class="td actions">
-            <button class="action-btn" @click="editProject(project.id)">
-              编辑
-            </button>
-            <button class="action-btn" @click="showDeleteConfirm(project)">
-              删除
+            <div class="form-group">
+              <label>项目描述</label>
+              <div class="input-wrapper">
+                <textarea
+                  v-model="newProject.description"
+                  placeholder="请输入项目描述"
+                  maxlength="255"
+                ></textarea>
+                <span class="char-count"
+                  >{{ newProject.description.length }} / 255</span
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>
+                项目类型
+                <span class="required">*</span>
+              </label>
+              <select v-model="newProject.type">
+                <option value="个人项目">个人项目</option>
+                <option value="团队项目">团队项目</option>
+              </select>
+            </div>
+          </div>
+          <div class="dialog-footer">
+            <button class="cancel-btn" @click="closeDialog">取消</button>
+            <button
+              class="confirm-btn"
+              @click="createProject"
+              :disabled="!isFormValid"
+            >
+              确定
             </button>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- 删除确认弹窗 -->
-    <div
-      class="dialog-overlay"
-      v-if="showDeleteDialog"
-      @click.self="closeDeleteDialog"
-    >
-      <div class="dialog">
-        <div class="dialog-header">
-          <h2>删除项目</h2>
-          <button class="close-btn" @click="closeDeleteDialog">×</button>
+      <div class="project-table">
+        <div class="table-header">
+          <div class="th project-name">项目名称</div>
+          <div class="th project-desc">项目描述</div>
+          <div class="th owner">负责人</div>
+          <div class="th type">项目类型</div>
+          <div class="th create-time">创建时间</div>
+          <div class="th actions">操作</div>
         </div>
-        <div class="dialog-content">
-          <p>确定要删除项目 "{{ projectToDelete?.name }}" 吗？</p>
-          <p class="warning-text">此操作不可撤销！</p>
+
+        <div class="empty-state" v-if="projects.length === 0">
+          <div class="empty-icon">
+            <svg
+              t="1739721104977"
+              class="icon"
+              viewBox="0 0 1024 1024"
+              version="1.1"
+              xmlns="http://www.w3.org/2000/svg"
+              p-id="2460"
+              width="100"
+              height="100"
+            >
+              <path
+                d="M512 85.333333c235.637333 0 426.666667 191.029333 426.666667 426.666667S747.637333 938.666667 512 938.666667 85.333333 747.637333 85.333333 512 276.362667 85.333333 512 85.333333z m214.592 318.677334a32 32 0 0 0-45.248 0.064L544.736 541.066667l-81.792-89.109334a32 32 0 0 0-46.613333-0.576l-119.36 123.733334a32 32 0 1 0 46.058666 44.437333l95.754667-99.264 81.418667 88.704a32 32 0 0 0 46.24 0.96l160.213333-160.693333a32 32 0 0 0-0.064-45.248z"
+                fill="#2c2c2c"
+                p-id="2461"
+              ></path>
+            </svg>
+          </div>
+          <div class="empty-text">暂无数据</div>
         </div>
-        <div class="dialog-footer">
-          <button class="cancel-btn" @click="closeDeleteDialog">取消</button>
-          <button class="delete-btn" @click="confirmDelete">删除</button>
+
+        <div class="table-body" v-else>
+          <div class="table-row" v-for="project in projects" :key="project.id">
+            <div class="td project-name">{{ project.name }}</div>
+            <div class="td project-desc">{{ project.description }}</div>
+            <div class="td owner">{{ project.owner }}</div>
+            <div class="td type">{{ project.type }}</div>
+            <div class="td create-time">{{ project.createTime }}</div>
+            <div class="td actions">
+              <button class="action-btn" @click="editProject(project.id)">
+                编辑
+              </button>
+              <button class="action-btn" @click="showDeleteConfirm(project)">
+                删除
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 删除确认弹窗 -->
+      <div
+        class="dialog-overlay"
+        v-if="showDeleteDialog"
+        @click.self="closeDeleteDialog"
+      >
+        <div class="dialog">
+          <div class="dialog-header">
+            <h2>删除项目</h2>
+            <button class="close-btn" @click="closeDeleteDialog">×</button>
+          </div>
+          <div class="dialog-content">
+            <p>确定要删除项目 "{{ projectToDelete?.name }}" 吗？</p>
+            <p class="warning-text">此操作不可撤销！</p>
+          </div>
+          <div class="dialog-footer">
+            <button class="cancel-btn" @click="closeDeleteDialog">取消</button>
+            <button class="delete-btn" @click="confirmDelete">删除</button>
+          </div>
         </div>
       </div>
     </div>
@@ -174,7 +190,16 @@ export default {
           name: "Test Project",
           owner: "user@example.com",
           description: "这是一个用于测试的项目",
+          type: "个人项目",
           createTime: "2024-03-20",
+        },
+        {
+          id: 2,
+          name: "团队协作平台",
+          owner: "team_leader@example.com",
+          description: "这是一个团队项目的测试项目",
+          type: "团队项目",
+          createTime: "2024-03-21",
         },
       ], // 项目列表数据
       showNewProjectDialog: false,
@@ -182,6 +207,7 @@ export default {
         name: "",
         owner: "user@example.com",
         description: "",
+        type: "个人项目",
       },
       showDeleteDialog: false,
       projectToDelete: null,
@@ -192,7 +218,11 @@ export default {
   },
   computed: {
     isFormValid() {
-      return this.newProject.name.trim() && this.newProject.owner;
+      return (
+        this.newProject.name.trim() &&
+        this.newProject.owner &&
+        this.newProject.type
+      );
     },
   },
   methods: {
@@ -202,6 +232,7 @@ export default {
         name: "",
         owner: "user@example.com",
         description: "",
+        type: "个人项目",
       };
     },
     createProject() {
@@ -247,11 +278,26 @@ export default {
 </script>
 
 <style scoped>
-.project-container {
-  padding: 20px;
-  background-color: #232323;
+body {
+  overflow: hidden;
+}
+.project-container-wrapper {
+  width: 100%;
   height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  background-color: #ffff;
+  overflow: hidden;
+}
+.project-container {
+  background-color: #232323;
+  padding: 10px;
+  height: 90vh;
   color: white;
+  width: 95%;
+  border-radius: 10px;
 }
 
 .project-header {
@@ -566,5 +612,8 @@ select {
 
 .delete-btn:hover {
   background-color: #ff7875;
+}
+.maintab {
+  position: absolute;
 }
 </style>
