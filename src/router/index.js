@@ -7,7 +7,7 @@ import Contact from "../views/Contact.vue";
 import Main from "../views/Main.vue";
 import project_list from "../views/project_list.vue";
 import protocolsimulation from "../views/protocolsimulation.vue";
-import ProjectWorkbench from "../components/project_workbenches.vue";
+import ProjectWorkbench from "../components/projectWorkBenches.vue";
 import Register from "../components/Register.vue";
 import KnowledgeGraphTool from "../views/KnowledgeGraphTool.vue";
 import Team from "../views/Team.vue";

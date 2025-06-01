@@ -151,16 +151,16 @@
 import { ref, computed } from "vue";
 import maintab from "../components/maintab.vue";
 
-// 假数据
+// 模拟数据
 const isLeader = true; // 当前用户是否为负责人
 const leader = {
-  name: "张三",
-  email: "leader@example.com",
+  name: "User",
+  email: "user@example.com",
 };
 const members = ref([
-  { name: "李四", email: "member1@example.com", progress: 80 },
-  { name: "王五", email: "member2@example.com", progress: 60 },
-  { name: "赵六", email: "member3@example.com", progress: 40 },
+  { name: "李四", email: "1234567890@qq.com", progress: 80 },
+  { name: "王五", email: "1234567890@qq.com", progress: 55 },
+  { name: "赵六", email: "1234567890@qq.com", progress: 45 },
 ]);
 
 // 团队任务进度（可根据成员进度平均值计算）

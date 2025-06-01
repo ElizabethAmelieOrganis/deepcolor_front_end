@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="item">
-      <div class="number">1</div>
+      <div class="number">4</div>
       <div class="text">成员</div>
     </div>
     <div class="item">

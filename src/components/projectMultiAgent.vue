@@ -24,8 +24,8 @@
       </g>
     </svg>
     <span class="texts">
-      <span class="text-1">GET IT ON</span>
-      <span class="text-2">MultiAgent</span>
+      <span class="text-1">多智能体</span>
+      <span class="text-2">全能研究员</span>
     </span>
   </a>
 </template>

@@ -16,7 +16,7 @@
           src="../assets/img/icon/afbalbatross.svg"
           style="transform: scale(0.7)"
         />
-        <a>MultiAgent</a>
+        <a>多智能体全能研究员</a>
       </div>
       <div class="close" @click="handleClose">
         <div class="line one"></div>

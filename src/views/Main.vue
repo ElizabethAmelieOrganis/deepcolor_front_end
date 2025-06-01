@@ -54,7 +54,9 @@
                   fill="#ffffff"
                 ></path>
               </svg>
-              <h2 class="team_name">User的团队<br />ID:114514</h2>
+              <h2 class="team_name" style="cursor: pointer" @click="goToTeam">
+                User的团队<br />ID:MTE0NTE0
+              </h2>
             </div>
             <div class="teamsinformation">
               <team_information />
@@ -145,6 +147,7 @@ import maintab from "../components/maintab.vue";
 import team_information from "../components/team_information.vue";
 import calendar from "../components/calendar.vue";
 import task_list from "../components/task_list.vue";
+import { useRouter } from "vue-router";
 
 export default {
   components: {
@@ -165,6 +168,9 @@ export default {
   methods: {
     updateTaskStats(stats) {
       this.taskStats = stats;
+    },
+    goToTeam() {
+      this.$router.push("/main/team");
     },
   },
 };
