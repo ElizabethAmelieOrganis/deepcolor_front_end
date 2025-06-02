@@ -1,12 +1,28 @@
 <template>
+  <div class="background_container"></div>
   <loading v-show="showLoading" />
   <div class="login-box">
     <p>Login</p>
+
+    <!-- 加强的反自动填充策略 -->
+    <div style="position: absolute; left: -9999px; top: -9999px">
+      <input type="text" name="fake_username" autocomplete="username" />
+      <input
+        type="password"
+        name="fake_password"
+        autocomplete="current-password"
+      />
+      <input type="text" name="decoy1" autocomplete="off" />
+      <input type="password" name="decoy2" autocomplete="off" />
+    </div>
+
     <el-form
       :rules="loginRules"
       ref="loginFormRef"
       :model="loginForm"
       class="login-form"
+      autocomplete="off"
+      @submit.native.prevent
     >
       <div class="user-box">
         <el-form-item prop="email">
@@ -14,6 +30,12 @@
             v-model="loginForm.email"
             type="email"
             placeholder="Email"
+            autocomplete="nope"
+            spellcheck="false"
+            :readonly="false"
+            name="user_email_input"
+            data-form-type="other"
+            @focus="onEmailFocus"
           />
         </el-form-item>
       </div>
@@ -24,6 +46,14 @@
             type="password"
             placeholder="Password"
             show-password
+            autocomplete="nope"
+            spellcheck="false"
+            :readonly="false"
+            name="user_password_input"
+            data-form-type="other"
+            @input="onPasswordInput"
+            @focus="onPasswordFocus"
+            @blur="onPasswordBlur"
           />
         </el-form-item>
       </div>
@@ -36,7 +66,12 @@
       </a>
     </el-form>
     <p class="forget" style="color: #aaa">
-      Forget your password?<a class="a2" href="#">Click here!</a>
+      Forget your password?<a
+        class="a2"
+        href="#"
+        @click.prevent="goToForgetPassword"
+        >Click here!</a
+      >
     </p>
     <p>
       Don't have an account?
@@ -47,7 +82,7 @@
 
 <script setup>
 import loading from "./loading.vue";
-import { ref } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 //引入axios
 import axios from "axios";
@@ -55,12 +90,47 @@ import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
 //引入拦截器
 import axiosInstance from "@/utils/axios";
+import { config } from "@/config";
+
 const authStore = useAuthStore();
 const router = useRouter();
 const loginForm = ref({
   email: "",
   password: "",
 });
+
+// 强制清除任何自动填充的内容
+const forceCleanAutoFill = () => {
+  console.log("🧹 强制清除浏览器自动填充");
+
+  const wasAutoFilled =
+    loginForm.value.email !== "" || loginForm.value.password !== "";
+
+  if (wasAutoFilled) {
+    console.log("⚠️ 检测到自动填充，正在清除...");
+    loginForm.value.email = "";
+    loginForm.value.password = "";
+  }
+};
+
+// 在组件挂载后延迟清除自动填充
+onMounted(() => {
+  console.log("🔧 Login组件已挂载，设置防自动填充");
+
+  // 多次延迟检查，因为浏览器可能在不同时间填充
+  setTimeout(forceCleanAutoFill, 100);
+  setTimeout(forceCleanAutoFill, 500);
+  setTimeout(forceCleanAutoFill, 1000);
+
+  // 禁用表单的autocomplete
+  nextTick(() => {
+    const form = document.querySelector(".login-form");
+    if (form) {
+      form.setAttribute("autocomplete", "off");
+    }
+  });
+});
+
 //登录表单验证规则
 const loginRules = {
   email: [
@@ -77,34 +147,56 @@ const loginRules = {
     },
   ],
 };
+
 const loginFormRef = ref(null);
+
 //登录逻辑
 const handleLogin = async () => {
   loginFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        // 使用正确的API路径
-        const response = await axiosInstance.post("/api/auth/token/", {
-          email: loginForm.email,
-          password: loginForm.password,
+        console.log("🔍 登录调试信息:");
+        console.log("API Base URL:", config.apiBaseUrl);
+        console.log("登录数据:", {
+          email: loginForm.value.email,
+          password: "***隐藏***",
         });
-        console.log("登陆成功", response.data);
+
+        const response = await axiosInstance.post("/auth/token/", {
+          email: loginForm.value.email,
+          password: loginForm.value.password,
+        });
+        console.log("登录成功", response.data);
         // 保存token
-        const { access, refresh } = response.data;
-        // 存储token
         authStore.setToken({
-          accessToken: access,
-          refreshToken: refresh,
+          accessToken: response.data.access,
+          refreshToken: response.data.refresh,
         });
+        // 获取用户信息
+        const userResponse = await axiosInstance.get("/users/profile/");
+        authStore.setUser(userResponse.data);
         // 跳转到主界面
         router.push("/main");
       } catch (error) {
-        console.error("登录错误:", error);
-        alert("登陆失败,请检查邮箱或者密码是否正确");
+        console.error("❌ 登录错误详情:", error);
+
+        if (error.response) {
+          switch (error.response.status) {
+            case 400:
+              alert("用户名或密码格式不正确");
+              break;
+            case 401:
+              alert("用户名或密码错误");
+              break;
+            default:
+              alert("登录失败，请稍后重试");
+          }
+        }
       }
     }
   });
 };
+
 const showLoading = ref(false);
 const submitForm = () => {
   showLoading.value = true;
@@ -119,6 +211,66 @@ const submitForm = () => {
 
 const goToRegister = () => {
   router.push("/register");
+};
+
+const goToForgetPassword = () => {
+  // 这里可以添加忘记密码的逻辑，现在暂时跳转到注册页面
+  alert("忘记密码功能开发中，请联系管理员或使用注册功能");
+  // router.push("/forgot-password"); // 如果有忘记密码页面的话
+};
+
+const onEmailFocus = () => {
+  console.log("📧 邮箱框获得焦点");
+
+  // 立即检查并清除测试邮箱的自动填充
+  if (loginForm.value.email === "18924412117@163.com") {
+    console.log("⚠️ 检测到测试邮箱自动填充，立即清除:", loginForm.value.email);
+    loginForm.value.email = "";
+  }
+
+  // 检查其他自动填充
+  setTimeout(() => {
+    if (loginForm.value.email && loginForm.value.email !== "") {
+      console.log("⚠️ 邮箱被自动填充，正在清除:", loginForm.value.email);
+      loginForm.value.email = "";
+    }
+  }, 100);
+};
+
+const onPasswordInput = () => {
+  // 检查是否是浏览器自动填充的测试密码
+  if (loginForm.value.password === "jsiqhdhwajsd") {
+    console.log("⚠️ 检测到测试账号自动填充，立即清除");
+    loginForm.value.password = "";
+    return;
+  }
+
+  // 仅在开发环境显示调试信息
+  if (import.meta.env.MODE === "development") {
+    console.log("🔑 密码输入监控");
+  }
+};
+
+const onPasswordFocus = () => {
+  console.log("🎯 密码框获得焦点");
+
+  // 立即检查并清除自动填充
+  if (loginForm.value.password && loginForm.value.password !== "") {
+    console.log("⚠️ 检测到浏览器自动填充，立即清除:", loginForm.value.password);
+    loginForm.value.password = "";
+  }
+
+  // 延迟再次检查，防止浏览器延后填充
+  setTimeout(() => {
+    if (loginForm.value.password && loginForm.value.password !== "") {
+      console.log("⚠️ 延迟检测到自动填充，再次清除:", loginForm.value.password);
+      loginForm.value.password = "";
+    }
+  }, 100);
+};
+
+const onPasswordBlur = () => {
+  console.log("🎯 密码框失去焦点");
 };
 </script>
 
@@ -135,6 +287,7 @@ const goToRegister = () => {
   box-sizing: border-box;
   box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
   border-radius: 10px;
+  z-index: 1000;
 }
 
 .login-box p:first-child {
@@ -308,24 +461,53 @@ const goToRegister = () => {
 }
 
 .el-input__wrapper {
-  background-color: transparent !important;
+  background-color: rgba(0, 0, 0, 0.8) !important;
   box-shadow: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 4px !important;
 }
 
 .el-input__inner {
-  background-color: transparent !important;
+  background-color: rgba(0, 0, 0, 0.8) !important;
   border: none !important;
   border-bottom: 1px solid #fff !important;
   border-radius: 0 !important;
   color: #fff !important;
-  padding: 10px 0 !important;
+  padding: 10px 12px !important;
 }
 
 .el-input__inner::placeholder {
-  color: #fff !important;
+  color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .el-form-item__error {
   color: #ff6b6b !important;
+}
+
+.background_container {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  background-image: url("../assets/img/background/greatbackground.svg");
+  z-index: 1;
+  opacity: 1;
+  pointer-events: none;
+  animation: slide-down 2s ease-in-out forwards;
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+body {
+  margin: 0;
+  background-color: black;
 }
 </style>

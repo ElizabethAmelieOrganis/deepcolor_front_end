@@ -38,7 +38,7 @@
         label-width="100px"
         class="upload-el-form"
         size="small"
-        label-position="top"
+        label-position="right"
         @submit.prevent
       >
         <el-form-item
@@ -93,7 +93,7 @@
         </el-form-item>
         <el-form-item
           label="测序文件"
-          prop="file"
+          prop="fileList"
           type="success"
           style="color: #e5eaf3"
           class="form-item"
@@ -101,17 +101,25 @@
         >
           <el-upload
             class="upload-demo"
-            :show-file-list="true"
+            drag
+            action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
+            multiple
+            :file-list="form.fileList"
+            :on-change="handleUploadChange"
+            :on-success="handleUploadSuccess"
             :auto-upload="false"
-            :before-upload="beforeFileUpload"
-            :on-change="onFileChange"
           >
-            <el-button type="primary">选择文件</el-button>
+            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+            <div class="el-upload__text">
+              Drop file here or <em>click to upload</em>
+            </div>
           </el-upload>
         </el-form-item>
         <el-form-item>
           <div class="center-box">
-            <el-button type="primary" @click="submitForm">提交并上传</el-button>
+            <el-button type="primary" @click="handleUploadSuccess"
+              >提交并上传</el-button
+            >
           </div>
         </el-form-item>
       </el-form>
@@ -204,6 +212,7 @@ import {
   ElUpload,
   ElMessage,
 } from "element-plus";
+import { UploadFilled } from "@element-plus/icons-vue";
 
 const loading = ref(false);
 const showWarning = ref(false);
@@ -216,7 +225,7 @@ const form = ref({
   owner: "",
   instrument: "",
   time: "",
-  file: null,
+  fileList: [],
 });
 
 const rules = {
@@ -224,29 +233,38 @@ const rules = {
   owner: [{ required: true, message: "请输入负责人姓名", trigger: "blur" }],
   instrument: [{ required: true, message: "请输入仪器名称", trigger: "blur" }],
   time: [{ required: true, message: "请选择测序时间", trigger: "change" }],
-  file: [{ required: true, message: "请上传测序文件", trigger: "change" }],
+  fileList: [{ required: true, message: "请上传测序文件", trigger: "change" }],
 };
 
-const beforeFileUpload = (file) => {
-  form.value.file = file;
-  return false; // 阻止自动上传
+// el-upload 相关事件
+const handleUploadChange = (file, fileList) => {
+  form.value.fileList = fileList;
 };
 
-const onFileChange = (file) => {
-  form.value.file = file.raw;
+const handleUploadSuccess = (response, file, fileList) => {
+  // 文件上传成功后，进入下一步
+  loading.value = true;
+  showWarning.value = false;
+  currentStep.value = 1;
+  setTimeout(() => {
+    loading.value = false;
+    showWarning.value = true;
+    currentStep.value = 2;
+  }, 2000);
 };
-
+// 提交表单（待启动）
 const submitForm = () => {
   formRef.value.validate((valid) => {
     if (valid) {
-      loading.value = true;
-      showWarning.value = false;
-      currentStep.value = 1;
-      setTimeout(() => {
-        loading.value = false;
-        showWarning.value = true;
-        currentStep.value = 2;
-      }, 2000);
+      // 触发 el-upload 的 submit 方法
+      const uploadRef = formRef.value.$el.querySelector(".el-upload");
+      if (uploadRef && uploadRef.__vueParentComponent) {
+        // 兼容 el-upload 2.x/3.x
+        const uploadVm = uploadRef.__vueParentComponent.ctx;
+        if (uploadVm && uploadVm.submit) {
+          uploadVm.submit();
+        }
+      }
     }
   });
 };

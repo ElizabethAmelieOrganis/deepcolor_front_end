@@ -1,4 +1,5 @@
 <template>
+  <div class="openAnime" v-if="isAnime"><openAnime /></div>
   <div class="background_container"></div>
   <div class="background_item">
     <img alt="petrel" src="../assets/img/Petrels.svg" />
@@ -28,32 +29,51 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from "vue";
 import StartButton from "../components/StartButton.vue";
 import Login from "../components/Login.vue";
 import hometab from "../components/hometab.vue";
 import Languagechange from "../components/Languagechange.vue";
-export default {
-  data() {
-    return {
-      isOpen: false,
-    };
-  },
-  components: {
-    StartButton,
-    Login,
-    hometab,
-    Languagechange,
-  },
-  methods: {
-    startLog() {
-      this.isOpen = true;
-    },
-    exitLog() {
-      this.isOpen = false;
-    },
-  },
-};
+import openAnime from "../components/openAnime.vue";
+import { onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { config } from "@/config";
+const isOpen = ref(false);
+const isAnime = ref(true);
+const router = useRouter();
+const authStore = useAuthStore();
+
+async function forceCleanState() {
+  console.log("🧹 强制清除所有登录状态以确保访客模式");
+  // 清除localStorage
+  try {
+    localStorage.removeItem(config.auth.tokenKey);
+    localStorage.removeItem(config.auth.refreshTokenKey);
+    localStorage.removeItem("user");
+    localStorage.removeItem("isEmailVerified");
+    console.log("✅ localStorage已清除");
+  } catch (error) {
+    console.log("⚠️ localStorage清除失败:", error);
+  }
+  // 清除Auth Store状态
+  authStore.clearAllState();
+  console.log("✅ 强制清除完成，确保访客模式");
+}
+
+function startLog() {
+  isOpen.value = true;
+}
+function exitLog() {
+  isOpen.value = false;
+}
+onMounted(async () => {
+  await forceCleanState();
+  setTimeout(() => {
+    isAnime.value = false;
+  }, 2000);
+});
 </script>
 
 <style>
@@ -90,17 +110,6 @@ body {
   z-index: 1;
   opacity: 1;
   pointer-events: none;
-  animation: slide-down 2s ease-in-out forwards;
-}
-@keyframes slide-down {
-  from {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 .home_container {
   width: 100%;
@@ -240,5 +249,11 @@ body {
 
 .introduction3 {
   animation-delay: 1.5s;
+}
+.openAnime {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
 }
 </style>

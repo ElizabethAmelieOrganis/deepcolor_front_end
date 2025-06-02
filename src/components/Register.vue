@@ -22,7 +22,8 @@
           />
         </el-form-item>
       </div>
-      <div class="user-box verification-box">
+      <!-- 暂时移除验证码功能，因为后端API不存在 -->
+      <!-- <div class="user-box verification-box">
         <el-form-item prop="verificationCode">
           <el-input
             v-model="registerForm.verificationCode"
@@ -37,7 +38,7 @@
             {{ countdown > 0 ? `${countdown}s` : "Get Code" }}
           </el-button>
         </el-form-item>
-      </div>
+      </div> -->
       <div class="user-box">
         <el-form-item prop="password">
           <el-input
@@ -57,6 +58,23 @@
             @blur="validateConfirmPassword"
             show-password
           />
+        </el-form-item>
+      </div>
+      <!-- 恢复验证码功能，因为后端已经实现 -->
+      <div class="user-box verification-box">
+        <el-form-item prop="verificationCode">
+          <el-input
+            v-model="registerForm.verificationCode"
+            placeholder="验证码"
+            class="verification-input"
+          />
+          <el-button
+            :disabled="countdown > 0"
+            @click="getVerificationCode"
+            class="verification-button"
+          >
+            {{ countdown > 0 ? `${countdown}s` : "获取验证码" }}
+          </el-button>
         </el-form-item>
       </div>
       <a>
@@ -81,6 +99,9 @@ import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 //引入axios
 import axios from "axios";
+import { config } from "@/config";
+import axiosInstance from "@/utils/axios";
+import { ElMessage } from "element-plus";
 const router = useRouter();
 //使用pinia管理token
 const authStore = useAuthStore();
@@ -90,12 +111,12 @@ const registerForm = ref({
   email: "",
   password: "",
   confirmPassword: "",
-  verificationCode: "",
+  verificationCode: "", // 恢复验证码字段
 });
 
 // 添加倒计时相关的数据
-const countdown = ref(0);
-const timer = ref(null);
+const countdown = ref(0); // 倒计时秒数
+const timer = ref(null); // 定时器引用
 
 //表单验证
 const registerRules = {
@@ -125,6 +146,7 @@ const registerRules = {
     { required: true, message: "确认密码不能为空", trigger: "blur" },
   ],
   verificationCode: [
+    // 恢复验证码验证
     { required: true, message: "请输入验证码", trigger: "blur" },
     { min: 6, max: 6, message: "验证码长度必须为6位", trigger: "blur" },
   ],
@@ -143,24 +165,164 @@ const validateConfirmPassword = () => {
 
 const registerFormRef = ref(null);
 
-// 获取验证码的方法
-const getVerificationCode = () => {
+// 获取验证码的方法 - 暂时注释掉，因为后端没有此API
+/*
+const getVerificationCode = async () => {
   if (!registerForm.value.email) {
-    alert("请先输入邮箱地址");
+    ElMessage.warning("请先输入邮箱地址");
     return;
   }
 
-  // 这里添加发送验证码的API调用
-  // TODO: 调用后端API发送验证码
+  // 验证邮箱格式
+  try {
+    await registerFormRef.value.validateField('email');
+  } catch (error) {
+    ElMessage.warning("请输入正确的邮箱格式");
+    return;
+  }
 
-  // 开始倒计时
-  countdown.value = 60;
-  timer.value = setInterval(() => {
-    countdown.value--;
-    if (countdown.value <= 0) {
-      clearInterval(timer.value);
+  try {
+    console.log('发送验证码请求:', {
+      apiBaseUrl: config.apiBaseUrl,
+      email: registerForm.value.email
+    });
+
+    // 使用配置文件中的API基础URL和axiosInstance
+    const response = await axiosInstance.post('/users/request-code/', {
+      email: registerForm.value.email
+    });
+
+    console.log('验证码请求响应:', response);
+
+    if (response.data.success || response.status === 200) {
+      ElMessage.success("验证码已发送到您的邮箱");
+      // 开始倒计时
+      // countdown.value = 60;
+      // timer.value = setInterval(() => {
+      //   countdown.value--;
+      //   if (countdown.value <= 0) {
+      //     clearInterval(timer.value);
+      //   }
+      // }, 1000);
+    } else {
+      ElMessage.error(response.data.message || "发送验证码失败");
     }
-  }, 1000);
+  } catch (error) {
+    console.error("发送验证码失败:", error);
+    if (error.response) {
+      console.error('错误响应:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+      
+      switch (error.response.status) {
+        case 400:
+          ElMessage.error("邮箱格式不正确");
+          break;
+        case 409:
+          ElMessage.error("该邮箱已被注册");
+          break;
+        case 429:
+          ElMessage.error("发送太频繁，请稍后再试");
+          break;
+        case 404:
+          ElMessage.error("验证码服务暂不可用，请联系管理员");
+          break;
+        default:
+          ElMessage.error(error.response.data?.message || "发送验证码失败，请稍后重试");
+      }
+    } else if (error.request) {
+      console.error('网络错误:', error.request);
+      ElMessage.error("网络错误，请检查网络连接");
+    } else {
+      console.error('请求配置错误:', error.message);
+      ElMessage.error("请求失败，请稍后重试");
+    }
+  }
+};
+*/
+
+// 获取验证码的方法
+const getVerificationCode = async () => {
+  if (!registerForm.value.email) {
+    ElMessage.warning("请先输入邮箱地址");
+    return;
+  }
+
+  // 验证邮箱格式
+  try {
+    await registerFormRef.value.validateField("email");
+  } catch (error) {
+    ElMessage.warning("请输入正确的邮箱格式");
+    return;
+  }
+
+  try {
+    console.log("📧 发送验证码请求:", {
+      apiBaseUrl: config.apiBaseUrl,
+      email: registerForm.value.email,
+    });
+
+    // 使用配置文件中的API基础URL和axiosInstance
+    const response = await axiosInstance.post(
+      "/users/send-verification-code/",
+      {
+        email: registerForm.value.email,
+        type: "register",
+      }
+    );
+
+    console.log("✅ 验证码请求响应:", response);
+
+    if (response.data.success || response.status === 200) {
+      ElMessage.success("验证码已发送到您的邮箱");
+      // 开始倒计时
+      countdown.value = 60;
+      timer.value = setInterval(() => {
+        countdown.value--;
+        if (countdown.value <= 0) {
+          clearInterval(timer.value);
+        }
+      }, 1000);
+    } else {
+      ElMessage.error(response.data.message || "发送验证码失败");
+    }
+  } catch (error) {
+    console.error("❌ 发送验证码失败:", error);
+    if (error.response) {
+      console.error("错误响应:", {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+      });
+
+      switch (error.response.status) {
+        case 400:
+          ElMessage.error("邮箱格式不正确");
+          break;
+        case 409:
+          ElMessage.error("该邮箱已被注册");
+          break;
+        case 429:
+          ElMessage.error("发送太频繁，请稍后再试");
+          break;
+        case 404:
+          ElMessage.error("验证码服务暂不可用，请联系管理员");
+          break;
+        default:
+          ElMessage.error(
+            error.response.data?.message || "发送验证码失败，请稍后重试"
+          );
+      }
+    } else if (error.request) {
+      console.error("网络错误:", error.request);
+      ElMessage.error("网络错误，请检查网络连接");
+    } else {
+      console.error("请求配置错误:", error.message);
+      ElMessage.error("请求失败，请稍后重试");
+    }
+  }
 };
 
 // 组件卸载时清除定时器
@@ -177,22 +339,40 @@ const handleRegister = async () => {
     email: registerForm.value.email,
     password: registerForm.value.password,
     password_confirm: registerForm.value.confirmPassword,
-    verificationCode: registerForm.value.verificationCode,
+    verification_code: registerForm.value.verificationCode, // 后端需要验证码
   };
   //验证表单
   const isValid = await registerFormRef.value.validate();
   if (isValid) {
     try {
-      const response = await axios.post(
-        "https://cmheelzvjfkx.sealoshzh.site/users/register",
+      console.log("📝 注册请求数据:", UserRegistration);
+      const response = await axiosInstance.post(
+        "/users/register/",
         UserRegistration
       );
-      console.log("注册成功");
-      console.log(response);
-      //跳转到主界面,注册完成后先不保存token,而是在登录时保存
+      console.log("✅ 注册成功", response.data);
+      ElMessage.success("注册成功，请登录");
       router.push("/");
     } catch (error) {
-      console.error("注册错误:", error);
+      console.error("❌ 注册错误:", error);
+      if (error.response) {
+        console.error("错误详情:", {
+          status: error.response.status,
+          data: error.response.data,
+        });
+        switch (error.response.status) {
+          case 400:
+            ElMessage.error("注册信息格式不正确，请检查输入");
+            break;
+          case 409:
+            ElMessage.error("用户名或邮箱已被注册");
+            break;
+          default:
+            ElMessage.error("注册失败，请稍后重试");
+        }
+      } else {
+        ElMessage.error("网络错误，请检查网络连接");
+      }
     }
   }
 };
@@ -390,21 +570,23 @@ const goToLogin = () => {
 
 /* 与登录页面相同的 Element Plus 样式覆盖 */
 .el-input__wrapper {
-  background-color: transparent !important;
+  background-color: rgba(0, 0, 0, 0.8) !important;
   box-shadow: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 4px !important;
 }
 
 .el-input__inner {
-  background-color: transparent !important;
+  background-color: rgba(0, 0, 0, 0.8) !important;
   border: none !important;
   border-bottom: 1px solid #fff !important;
   border-radius: 0 !important;
   color: #fff !important;
-  padding: 10px 0 !important;
+  padding: 10px 12px !important;
 }
 
 .el-input__inner::placeholder {
-  color: #fff !important;
+  color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .el-form-item__error {
