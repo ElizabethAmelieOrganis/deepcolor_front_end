@@ -72,7 +72,7 @@ onMounted(async () => {
   await forceCleanState();
   setTimeout(() => {
     isAnime.value = false;
-  }, 2000);
+  }, 4000);
 });
 </script>
 
